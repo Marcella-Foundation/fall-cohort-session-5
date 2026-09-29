@@ -99,7 +99,7 @@
 
 <div class="deck">
   <iframe class="slide active" src="atriumIntro/index.html" title="The Atrium"></iframe>
-  <iframe class="slide" src="liabilitySlips/index.html" title="Liability Slips"></iframe>
+  <!-- Hidden from deck: <iframe class="slide" src="liabilitySlips/index.html" title="Liability Slips"></iframe> -->
   <iframe class="slide" src="houseKeeping/index.html" title="House Keeping"></iframe>
   <!-- Hidden from deck: <iframe class="slide" src="whatIsMarcella/index.html" title="What is Marcella Foundation?"></iframe> -->
   <!-- Hidden from deck: <iframe class="slide" src="joinDiscord/index.html" title="Join Discord"></iframe> -->
@@ -107,12 +107,14 @@
   <!-- Hidden from deck: <iframe class="slide" src="installApp/index.html" title="Install Eyra"></iframe> -->
   <!-- Hidden from deck: <iframe class="slide" src="demoStructures/index.html" title="Demonstration of Structures"></iframe> -->
   <!-- Hidden from deck: <iframe class="slide" src="scribbleBots/index.html" title="Scribble Bots Recap"></iframe> -->
-  <iframe class="slide" src="todaysPlan/index.html" title="Today's Plan"></iframe>
-  <iframe class="slide" src="laserCuttingDemo/index.html" title="Laser Cutting Demo"></iframe>
-  <iframe class="slide" src="bitmapVsVector/index.html" title="Bitmap vs Vector"></iframe>
+  <iframe class="slide" src="todaysPlan/index.html" title="Today's Plan" data-steps></iframe>
+  <iframe class="slide" src="groundRules/index.html" title="Ground Rules" data-steps></iframe>
+  <iframe class="slide" src="laserSteps/index.html" title="Laser Steps" data-steps></iframe>
+  <!-- Hidden from deck: <iframe class="slide" src="laserCuttingDemo/index.html" title="Laser Cutting Demo"></iframe> -->
+  <!-- Hidden from deck: <iframe class="slide" src="bitmapVsVector/index.html" title="Bitmap vs Vector"></iframe> -->
   <!-- Hidden from deck: <iframe class="slide" src="whereDoYouStand/index.html" title="Where Do You Stand?"></iframe> -->
   <!-- Hidden from deck: <iframe class="slide" src="isThisLegal/index.html" title="Is This Legal?"></iframe> -->
-  <iframe class="slide" src="aiPortraitWorkflow/index.html" title="AI Portrait Workflow"></iframe>
+  <!-- Hidden from deck: <iframe class="slide" src="aiPortraitWorkflow/index.html" title="AI Portrait Workflow"></iframe> -->
 </div>
 
 <div class="nav" id="nav">
@@ -138,19 +140,36 @@
 
   function goTo(i) {
     if (i < 0 || i >= slides.length) return;
+    const from = current;
     slides[current].classList.remove('active');
     dots[current].classList.remove('active');
     current = i;
     slides[current].classList.add('active');
     dots[current].classList.add('active');
+    // Stepped slides start at their first reveal going forward, fully revealed going back.
+    slides[current].contentWindow.postMessage({ deck: 'enter', at: i < from ? 'end' : 'start' }, '*');
+    // Pull keyboard focus back from any iframe so arrow keys keep driving the deck.
+    if (document.activeElement && document.activeElement.tagName === 'IFRAME') document.activeElement.blur();
+    window.focus();
   }
 
-  document.getElementById('prev').addEventListener('click', () => goTo(current - 1));
-  document.getElementById('next').addEventListener('click', () => goTo(current + 1));
+  // Slides marked data-steps get Next/Prev first; they reply with 'advance' when out of reveals.
+  function step(dir) {
+    const slide = slides[current];
+    if (slide.hasAttribute('data-steps')) slide.contentWindow.postMessage({ deck: 'step', dir }, '*');
+    else goTo(current + dir);
+  }
+
+  window.addEventListener('message', (e) => {
+    if (e.data && e.data.deck === 'advance' && e.source === slides[current].contentWindow) goTo(current + e.data.dir);
+  });
+
+  document.getElementById('prev').addEventListener('click', () => step(-1));
+  document.getElementById('next').addEventListener('click', () => step(1));
 
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'ArrowRight' || e.key === ' ') goTo(current + 1);
-    if (e.key === 'ArrowLeft') goTo(current - 1);
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); step(1); }
+    if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); step(-1); }
   });
 
   function showNav() {
