@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Breadboard</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #1a1b2e;
+    font-family: 'Inter', sans-serif;
+    overflow: hidden;
+    position: relative;
+  }
+
+  body::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='48' viewBox='0 0 28 48'%3E%3Cpath d='M14 0 L28 8 L28 24 L14 32 L0 24 L0 8 Z M14 32 L14 48' fill='none' stroke='%23ffffff' stroke-opacity='0.04' stroke-width='1'/%3E%3C/svg%3E");
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  body::before {
+    content: '';
+    position: absolute;
+    width: 900px;
+    height: 900px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 210, 74, 0.12) 0%, transparent 70%);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 0;
+    animation: breathe 6s ease-in-out infinite;
+  }
+
+  @keyframes breathe {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.8; }
+    50% { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
+  }
+
+  .content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: clamp(0.6rem, 1.6vh, 1rem);
+    width: 100%;
+    max-width: 1400px;
+    padding: 2.5vh 3vw;
+  }
+
+  .eyebrow {
+    color: rgba(255, 255, 255, 0.55);
+    font-size: clamp(0.85rem, 1.6vw, 1rem);
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+
+  h1 {
+    color: #ffffff;
+    font-size: clamp(2rem, 4.6vw, 3.2rem);
+    font-weight: 900;
+    letter-spacing: -1px;
+    line-height: 1.1;
+    text-align: center;
+    text-shadow: 0 2px 20px rgba(255, 210, 74, 0.3);
+    margin-top: -0.4rem;
+  }
+
+  h1 span { color: #ffd24a; }
+
+  .layout {
+    display: grid;
+    grid-template-columns: auto minmax(280px, 1fr);
+    align-items: center;
+    gap: clamp(1rem, 2.5vw, 2rem);
+    width: 100%;
+    margin-top: 0.4rem;
+  }
+
+  /* ---------- photo + overlay ---------- */
+  .photo {
+    position: relative;
+    width: min(58vw, calc(68vh * 1479 / 1089));
+    aspect-ratio: 1479 / 1089;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
+  }
+  .photo img, .photo svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+  .captions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    margin-top: 0.5rem;
+    color: rgba(255, 255, 255, 0.55);
+    font-size: clamp(0.7rem, 1.1vw, 0.85rem);
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-align: center;
+  }
+
+  /* overlay groups fade in for the step they belong to */
+  .ov { opacity: 0; transition: opacity 0.5s ease; }
+
+  .hl {
+    fill: rgba(255, 210, 74, 0.28);
+    stroke: #ffd24a;
+    stroke-width: 6;
+    filter: drop-shadow(0 0 10px rgba(255, 210, 74, 0.9));
+  }
+  .hl.alt { fill: rgba(46, 204, 168, 0.28); stroke: #2ecca8; filter: drop-shadow(0 0 10px rgba(46, 204, 168, 0.9)); }
+  .hl.pos { fill: rgba(255, 107, 107, 0.25); stroke: #ff6b6b; filter: drop-shadow(0 0 10px rgba(255, 107, 107, 0.9)); }
+  .hl.neg { fill: rgba(92, 184, 255, 0.25); stroke: #5cb8ff; filter: drop-shadow(0 0 10px rgba(92, 184, 255, 0.9)); }
+
+  .roads .hl { animation: pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+
+  .river { stroke: #ff8a5c; stroke-width: 8; stroke-dasharray: 18 14; filter: drop-shadow(0 0 8px #ff8a5c); }
+  .river-x { font: 900 64px 'Inter', sans-serif; fill: #ff8a5c; filter: drop-shadow(0 0 8px #ff8a5c); }
+
+  /* a car driving down the road */
+  .car { fill: #fff; filter: drop-shadow(0 0 8px #ffd24a) drop-shadow(0 0 18px #ffd24a); }
+
+  .jumper {
+    fill: none;
+    stroke: #ff6b6b;
+    stroke-width: 12;
+    stroke-linecap: round;
+    stroke-dasharray: 400;
+    stroke-dashoffset: 400;
+    filter: drop-shadow(0 0 8px rgba(255, 107, 107, 0.8));
+  }
+  .jumper.blk { stroke: #5cb8ff; filter: drop-shadow(0 0 8px rgba(92, 184, 255, 0.8)); }
+  .s5 .jumper { animation: draw 0.9s ease-out forwards; }
+  .s5 .jumper.blk { animation-delay: 0.5s; }
+  @keyframes draw { to { stroke-dashoffset: 0; } }
+
+  .s1 .ov.o1, .s2 .ov.o2, .s3 .ov.o3, .s4 .ov.o4, .s5 .ov.o5 { opacity: 1; }
+
+  /* ---------- talking points ---------- */
+  .points {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(0.45rem, 1.2vh, 0.7rem);
+  }
+
+  .point {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.85rem;
+    padding: clamp(0.6rem, 1.4vh, 0.85rem) 1rem;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    opacity: 0;
+    transform: translateX(16px);
+    cursor: pointer;
+    transition: opacity 0.5s ease, transform 0.5s ease, border-color 0.4s ease, background 0.4s ease, box-shadow 0.4s ease;
+  }
+  .point.shown { opacity: 0.5; transform: none; }
+  .point.current {
+    opacity: 1;
+    border-color: #ffd24a;
+    background: rgba(255, 210, 74, 0.06);
+    box-shadow: 0 0 0 1px #ffd24a, 0 0 30px rgba(255, 210, 74, 0.25);
+  }
+
+  .num {
+    flex: 0 0 auto;
+    width: clamp(30px, 3vw, 38px);
+    height: clamp(30px, 3vw, 38px);
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: rgba(255, 210, 74, 0.14);
+    color: #ffd24a;
+    font-size: clamp(0.9rem, 1.4vw, 1.05rem);
+    font-weight: 900;
+    transition: all 0.4s ease;
+  }
+  .point.current .num { background: #ffd24a; color: #1a1b2e; box-shadow: 0 0 16px rgba(255, 210, 74, 0.8); }
+
+  .title {
+    color: #ffffff;
+    font-size: clamp(0.95rem, 1.6vw, 1.25rem);
+    font-weight: 700;
+    line-height: 1.25;
+  }
+  .sub {
+    margin-top: 0.2rem;
+    color: rgba(255, 255, 255, 0.62);
+    font-size: clamp(0.8rem, 1.2vw, 0.95rem);
+    line-height: 1.35;
+  }
+  .sub b { color: #ffffff; }
+
+  @media (max-width: 860px) {
+    .layout { grid-template-columns: 1fr; }
+    .photo { width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<div class="content">
+  <div class="eyebrow">Your building surface</div>
+  <h1>The <span>Breadboard</span></h1>
+
+  <div class="layout">
+    <div>
+      <div class="photo" id="photo">
+        <img src="breadboard.png" alt="A breadboard from the front, and flipped over to show the metal strips inside">
+        <!-- overlay drawn in the photo's own pixel coordinates -->
+        <svg viewBox="0 0 1479 1089" preserveAspectRatio="none">
+
+          <!-- 1: the roads, every strip on the back -->
+          <g class="ov o1 roads">
+            <rect class="hl" x="898" y="104" width="168" height="856" rx="10" />
+            <rect class="hl" x="1098" y="104" width="168" height="856" rx="10" />
+          </g>
+
+          <!-- 2: one row of five holes = one road (a–e on the front is the right-hand strip on the back) -->
+          <g class="ov o2">
+            <rect class="hl" x="200" y="361" width="146" height="32" rx="8" />
+            <rect class="hl" x="1098" y="363" width="168" height="30" rx="8" />
+            <circle class="car" r="11" cy="377">
+              <animate attributeName="cx" values="214;332;214" dur="2.4s" repeatCount="indefinite" />
+            </circle>
+            <circle class="car" r="11" cy="378">
+              <animate attributeName="cx" values="1112;1252;1112" dur="2.4s" repeatCount="indefinite" />
+            </circle>
+          </g>
+
+          <!-- 3: the middle gap splits a–e from f–j -->
+          <g class="ov o3">
+            <rect class="hl" x="200" y="361" width="146" height="32" rx="8" />
+            <rect class="hl alt" x="398" y="361" width="146" height="32" rx="8" />
+            <line class="river" x1="372" y1="80" x2="372" y2="1010" />
+            <text class="river-x" x="372" y="350" text-anchor="middle">✕</text>
+            <rect class="hl" x="1098" y="363" width="168" height="30" rx="8" />
+            <rect class="hl alt" x="898" y="363" width="168" height="30" rx="8" />
+            <line class="river" x1="1082" y1="80" x2="1082" y2="1010" />
+          </g>
+
+          <!-- 4: the power rails run top to bottom -->
+          <g class="ov o4">
+            <rect class="hl pos" x="84" y="104" width="36" height="846" rx="10" />
+            <rect class="hl neg" x="116" y="104" width="36" height="846" rx="10" />
+            <rect class="hl pos" x="578" y="104" width="36" height="846" rx="10" />
+            <rect class="hl neg" x="612" y="104" width="36" height="846" rx="10" />
+            <rect class="hl pos" x="1338" y="104" width="30" height="856" rx="10" />
+            <rect class="hl neg" x="1306" y="104" width="30" height="856" rx="10" />
+            <rect class="hl pos" x="830" y="104" width="30" height="856" rx="10" />
+            <rect class="hl neg" x="798" y="104" width="30" height="856" rx="10" />
+          </g>
+
+          <!-- 5: we build the bridges with wires -->
+          <g class="ov o5">
+            <path class="jumper" d="M102 377 C130 300, 190 300, 216 377" />
+            <path class="jumper blk" d="M134 690 C170 610, 280 610, 300 690" />
+          </g>
+        </svg>
+      </div>
+      <div class="captions"><span>Front</span><span>Back (flipped over)</span></div>
+    </div>
+
+    <div class="points" id="points"></div>
+  </div>
+</div>
+
+<script>
+  const POINTS = [
+    { title: 'It’s a city of roads that aren’t connected yet',
+      sub: 'Flip it over: those metal strips are the roads. Our job is to link them up.' },
+    { title: 'Each row of 5 holes is one road',
+      sub: 'Anything plugged into the <b>same row</b> is connected.' },
+    { title: 'The middle gap is a river with no bridge',
+      sub: '<b>a–e</b> and <b>f–j</b> in the same row are <b>not</b> connected.' },
+    { title: 'The side rails are power highways',
+      sub: 'They run top to bottom. Plug the battery’s <b>+</b> and <b>−</b> in here.' },
+    { title: 'You build the bridges',
+      sub: 'Wires and parts connect the roads into a <b>closed loop</b>.' },
+  ];
+
+  const list = document.getElementById('points');
+  const photo = document.getElementById('photo');
+
+  const rows = POINTS.map((p, i) => {
+    const el = document.createElement('div');
+    el.className = 'point';
+    el.innerHTML = '<div class="num">' + (i + 1) + '</div>' +
+      '<div><div class="title">' + p.title + '</div><div class="sub">' + p.sub + '</div></div>';
+    el.addEventListener('click', () => { step = i + 1; render(); });
+    list.appendChild(el);
+    return el;
+  });
+
+  // Step 0 is just the photo. Each step after reveals one point and its overlay.
+  const MAX = POINTS.length;
+  let step = 0;
+
+  function render() {
+    rows.forEach((el, i) => {
+      el.classList.toggle('shown', step >= i + 1);
+      el.classList.toggle('current', step === i + 1);
+    });
+    for (let i = 1; i <= MAX; i++) photo.classList.toggle('s' + i, step === i);
+  }
+
+  // Deck step protocol: the deck sends {deck:'step', dir} and {deck:'enter', at}.
+  // We reply {deck:'advance', dir} once this slide has no more reveals in that direction.
+  function go(dir) {
+    const n = step + dir;
+    if (n < 0 || n > MAX) { window.parent.postMessage({ deck: 'advance', dir }, '*'); return; }
+    step = n;
+    render();
+  }
+
+  window.addEventListener('message', (e) => {
+    const d = e.data || {};
+    if (d.deck === 'step') go(d.dir);
+    if (d.deck === 'enter') { step = d.at === 'end' ? MAX : 0; render(); }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (['ArrowRight', ' ', 'PageDown'].includes(e.key)) { e.preventDefault(); go(1); }
+    if (['ArrowLeft', 'PageUp'].includes(e.key)) { e.preventDefault(); go(-1); }
+  });
+
+  render();
+</script>
+</body>
+</html>
